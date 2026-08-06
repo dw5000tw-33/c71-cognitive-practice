@@ -1,1 +1,345 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>高齡認知練習</title><style>*{box-sizing:border-box}body{margin:0;background:#eef7ee;font-family:sans-serif;font-weight:900;color:#17351f}.app{max-width:680px;margin:auto;padding:12px}.head{display:flex;gap:12px;align-items:center;background:#fff;border:3px solid #83ba91;border-radius:22px;padding:10px;margin-bottom:14px}.logo{width:68px;height:68px;border-radius:16px;background:#8cc79a;display:grid;place-items:center;color:#fff;font-size:38px}.head h1{font-size:34px;line-height:1.1;margin:0;color:#186b4e}.card{background:#fff;border:3px solid #b9cfbd;border-radius:22px;padding:16px;margin-bottom:14px}h2{font-size:34px;color:#a20f22;line-height:1.25;margin:0 0 14px}p,label{font-size:29px;line-height:1.45}.btn{width:100%;min-height:70px;margin:7px 0;border:0;border-radius:18px;background:#32774d;color:#fff;font-size:32px;font-weight:900;box-shadow:0 5px #17502e}.btn.alt{background:#7d1540;box-shadow:0 5px #520b28}.row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin:12px 0}.row input,.recall{width:100%;height:66px;border:4px solid #84998a;border-radius:10px;font-size:34px;font-weight:900;padding:6px}.hide{display:none}.feedback{font-size:30px;padding:12px;border-radius:14px;margin:12px 0}.ok{background:#dff3e3}.no{background:#ffe2e2;color:#8a1111}.memory{display:grid;grid-template-columns:1fr 1fr;gap:8px}.item{border:3px solid #879b8c;background:#fff;text-align:center;padding:8px}.item b{font-size:27px;color:#25678b;display:block}.item span{font-size:62px}.timer{text-align:center;font-size:76px;color:#a20f22}.clock{font-size:58px;text-align:center;color:#a20f22}canvas{width:100%;aspect-ratio:1;background:#fff;border:4px solid #68786b;border-radius:15px;touch-action:none}</style></head><body><main class="app"><header class="head"><div class="logo">33</div><h1>高齡駕駛人<br>認知練習</h1></header><section id="home"><div class="card"><h2>今天在哪裡練習？</h2><button class="btn loc" data-v="家裡">家裡</button><button class="btn loc" data-v="大潤發百貨">大潤發百貨</button><button class="btn loc" data-v="監理站">監理站</button></div></section><section id="quiz" class="hide"><div class="card"><h2 id="title"></h2><div id="body"></div><div id="fb"></div><button id="check" class="btn alt">看答案</button><button id="next" class="btn hide">下一題</button></div></section><section id="memory" class="hide"><div class="card"><h2>第二關：短期記憶</h2><p>請仔細記住下面十樣東西。</p><div id="items" class="memory"></div></div><button id="seen" class="btn">我看完了</button></section><section id="wait" class="hide"><div class="card"><h2>請休息兩分鐘</h2><p>請不要返回查看。</p><div id="timer" class="timer">02:00</div></div></section><section id="recall" class="hide"><div class="card"><h2>請寫出記得的物品</h2><div id="inputs"></div><div id="mfb"></div><button id="mcheck" class="btn alt">看結果</button></div></section><section id="clock" class="hide"><div class="card"><h2>第三關：畫時鐘</h2><p>請畫出指定時間：</p><div id="time" class="clock"></div><canvas id="cv" width="700" height="700"></canvas><button id="clear" class="btn">清除重畫</button><button id="answer" class="btn alt">看參考答案</button><button id="finish" class="btn">完成練習</button></div></section><section id="done" class="hide"><div class="card"><h2>練習完成</h2><button id="again" class="btn">再練習一次</button></div></section></main><script>const $=s=>document.querySelector(s),screens=['home','quiz','memory','wait','recall','clock','done'];function show(id){screens.forEach(x=>$('#'+x).classList.toggle('hide',x!==id));scrollTo(0,0)}let place='',qi=0,th,tm;const z=['猴','雞','狗','豬','鼠','牛','虎','兔','龍','蛇','馬','羊'];function info(){let d=new Date();let lm='',ld='';try{let p=new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{month:'long',day:'numeric'}).formatToParts(d);lm=(p.find(x=>x.type==='month')||{}).value||'';ld=(p.find(x=>x.type==='day')||{}).value||''}catch(e){}return{y:d.getFullYear(),r:d.getFullYear()-1911,z:z[d.getFullYear()%12],m:d.getMonth()+1,day:d.getDate(),w:['日','一','二','三','四','五','六'][d.getDay()],lm:lm.replace('月',''),ld}}const qs=[{t:'問題一：今年是民國幾年，或今年出生的小孩屬什麼生肖',h:'<div class="row"><label>民國</label><input id="a1" inputmode="numeric"><span>年</span></div><div class="row"><label>生肖</label><input id="a2"><span></span></div><div class="row"><label>西元</label><input id="a3" inputmode="numeric"><span>年</span></div>',a:()=>{let d=info();return`民國 ${d.r} 年／生肖 ${d.z}／西元 ${d.y} 年`},c:()=>{let d=info();return $('#a1').value.trim()==d.r||$('#a2').value.includes(d.z)||$('#a3').value.trim()==d.y}},{t:'問題二：這個月是國曆或農曆幾月',h:'<div class="row"><label>國曆</label><input id="a1" inputmode="numeric"><span>月</span></div><div class="row"><label>農曆</label><input id="a2"><span>月</span></div>',a:()=>{let d=info();return`國曆 ${d.m} 月／農曆 ${d.lm||'請依手機日期確認'} 月`},c:()=>{let d=info();return $('#a1').value.trim()==d.m||(d.lm&&$('#a2').value.includes(d.lm))}},{t:'問題三：今天是國曆或農曆幾號',h:'<div class="row"><label>國曆</label><input id="a1" inputmode="numeric"><span>號</span></div><div class="row"><label>農曆</label><input id="a2"><span>日</span></div>',a:()=>{let d=info();return`國曆 ${d.day} 號／農曆 ${d.ld||'請依手機日期確認'} 日`},c:()=>{let d=info();return $('#a1').value.trim()==d.day||(d.ld&&$('#a2').value.includes(d.ld))}},{t:'問題四：今天星期幾',h:'<div class="row"><label>星期</label><input id="a1"><span></span></div>',a:()=>`星期${info().w}`,c:()=>['星期'+info().w,info().w,info().w==='日'?'天':''].includes($('#a1').value.trim())},{t:'問題五：這裡是什麼地方',h:'<div class="row"><label>答案</label><input id="a1"><span></span></div>',a:()=>place,c:()=>{let v=$('#a1').value.trim();return place==='家裡'?['家裡','家中','家'].includes(v):place==='大潤發百貨'?['大潤發百貨','大潤發'].includes(v):['監理站','監理所'].includes(v)}}];function render(){let q=qs[qi];$('#title').textContent=q.t;$('#body').innerHTML=q.h;$('#fb').innerHTML='';$('#check').classList.remove('hide');$('#next').classList.add('hide');$('#next').textContent=qi===4?'繼續第二關':'下一題';show('quiz')}document.querySelectorAll('.loc').forEach(b=>b.onclick=()=>{place=b.dataset.v;qi=0;render()});$('#check').onclick=()=>{let q=qs[qi],ok=q.c();$('#fb').className='feedback '+(ok?'ok':'no');$('#fb').innerHTML=(ok?'答對了！<br>':'再看看答案：<br>')+q.a();$('#check').classList.add('hide');$('#next').classList.remove('hide')};$('#next').onclick=()=>{if(qi<4){qi++;render()}else startMemory()};const objs=[['紅綠燈','🚦'],['禁止停車','🚫'],['機車','🛵'],['救護車','🚑'],['菜刀','🔪'],['碗','🥣'],['芭樂','🍈'],['蘋果','🍎'],['傘','☂️'],['筆','🖊️']];function startMemory(){$('#items').innerHTML=objs.map(x=>`<div class="item"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');show('memory')}$('#seen').onclick=()=>{show('wait');let n=120;let id=setInterval(()=>{n--;$('#timer').textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');if(n<=0){clearInterval(id);startRecall()}},1000)};function startRecall(){$('#inputs').innerHTML=Array.from({length:10},(_,i)=>`<input class="recall" placeholder="第 ${i+1} 樣">`).join('');show('recall')}$('#mcheck').onclick=()=>{let aliases={'摩托車':'機車','雨傘':'傘','原子筆':'筆','飯碗':'碗','番石榴':'芭樂','刀':'菜刀','交通號誌':'紅綠燈'};let vals=[...document.querySelectorAll('.recall')].map(x=>aliases[x.value.trim()]||x.value.trim());let names=objs.map(x=>x[0]),good=[...new Set(vals.filter(x=>names.includes(x)))];$('#mfb').className='feedback '+(good.length>=4?'ok':'no');$('#mfb').textContent=`答對 ${good.length} 樣，${good.length>=4?'通過！':'需要四樣以上。'}`;$('#mcheck').textContent='繼續畫時鐘';$('#mcheck').onclick=startClock};function face(hands){let c=$('#cv'),x=c.getContext('2d'),cx=350,cy=350,r=300;x.clearRect(0,0,700,700);x.fillStyle='#fff';x.fillRect(0,0,700,700);x.strokeStyle='#222';x.lineWidth=8;x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke();x.font='bold 58px sans-serif';x.textAlign='center';x.textBaseline='middle';for(let n=1;n<=12;n++){let a=n*Math.PI/6-Math.PI/2;x.fillStyle='#111';x.fillText(n,cx+Math.cos(a)*240,cy+Math.sin(a)*240)}if(hands){let ma=tm*Math.PI/30-Math.PI/2,ha=(th%12+tm/60)*Math.PI/6-Math.PI/2;x.strokeStyle='#174f2d';x.lineCap='round';x.lineWidth=18;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(ha)*145,cy+Math.sin(ha)*145);x.stroke();x.lineWidth=12;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(ma)*210,cy+Math.sin(ma)*210);x.stroke()}}function startClock(){th=Math.floor(Math.random()*12)+1;tm=[0,5,10,15,20,25,30,35,40,45,50,55][Math.floor(Math.random()*12)];$('#time').textContent=`${th} 點 ${String(tm).padStart(2,'0')} 分`;face(false);show('clock')}let cv=$('#cv'),ctx=cv.getContext('2d'),drawing=false,last;function pt(e){let r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*700/r.width,y:(e.clientY-r.top)*700/r.height}}cv.onpointerdown=e=>{drawing=true;last=pt(e)};cv.onpointermove=e=>{if(!drawing)return;let p=pt(e);ctx.strokeStyle='#c21b2e';ctx.lineWidth=13;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p};onpointerup=()=>drawing=false;$('#clear').onclick=()=>face(false);$('#answer').onclick=()=>face(true);$('#finish').onclick=()=>show('done');$('#again').onclick=()=>show('home');</script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#78b88a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>高齡駕駛人認知練習</title>
+<style>
+:root{
+  --green:#32774d; --light:#e9f4ea; --deep:#17351f; --accent:#b0003a;
+  --panel:#ffffff; --line:#b9cfbd; --warn:#b21f2d; --ok:#1e773b;
+  font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:linear-gradient(#f8fff7,#e8f3e8);color:#152218;
+  font-weight:800;min-height:100vh;
+}
+button,input,select,textarea{font:inherit}
+.app{max-width:680px;margin:auto;padding:14px 14px 40px}
+.brand{display:flex;align-items:center;gap:12px;background:#fff;border:3px solid #8fc59c;
+  border-radius:24px;padding:10px 14px;box-shadow:0 4px 12px #0002;margin-bottom:16px}
+.brand img{width:70px;height:70px;border-radius:18px}
+.brand h1{font-size:clamp(28px,7vw,42px);line-height:1.15;margin:0;color:#186b4e}
+.card{background:var(--panel);border:3px solid var(--line);border-radius:24px;padding:18px;
+  box-shadow:0 5px 14px #0002;margin-bottom:16px}
+h2{font-size:clamp(28px,7vw,40px);line-height:1.25;margin:0 0 16px;color:#a20f22}
+p,label,.question{font-size:clamp(25px,6.5vw,36px);line-height:1.45}
+.small{font-size:clamp(20px,5vw,27px);font-weight:700}
+.row{display:grid;gap:12px}
+.grid3{grid-template-columns:1fr}
+.big-btn{
+  width:100%;min-height:68px;border:0;border-radius:18px;padding:12px 16px;
+  font-size:clamp(26px,6.5vw,36px);font-weight:900;background:#32774d;color:#fff;
+  box-shadow:0 5px 0 #17502e;touch-action:manipulation
+}
+.big-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #17502e}
+.big-btn.secondary{background:#7d1540;box-shadow:0 5px 0 #520b28}
+.big-btn.light{background:#fff;color:#214d30;border:3px solid #4e9862;box-shadow:none}
+.big-btn.danger{background:#b21f2d;box-shadow:0 5px 0 #70131c}
+.answer-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;margin:12px 0}
+.answer-row label,.unit{font-size:clamp(25px,6vw,34px)}
+input[type=text],input[type=number]{
+  width:100%;min-width:0;height:64px;border:4px solid #869b8b;border-radius:10px;
+  padding:5px 10px;font-size:clamp(28px,7vw,40px);font-weight:900;background:#fff
+}
+input:focus{outline:5px solid #b6dfbf;border-color:#246d3e}
+.feedback{font-size:clamp(26px,6.5vw,36px);padding:12px;border-radius:14px;margin:12px 0;display:none}
+.feedback.show{display:block}.feedback.ok{background:#dff3e3;color:#155b2d}.feedback.no{background:#ffe2e2;color:#8a1111}
+.progress{font-size:22px;text-align:center;margin:8px 0 14px;color:#31563a}
+.location-grid{display:grid;gap:14px}
+.memory-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.memory-item{display:grid;grid-template-columns:1fr 1.35fr;align-items:center;border:3px solid #879b8c;background:#fafafa;min-height:120px}
+.memory-item .name{font-size:clamp(23px,5.8vw,31px);padding:8px;text-align:center;color:#25678b}
+.memory-item .emoji{font-size:clamp(52px,14vw,82px);text-align:center;background:#fff;padding:8px}
+.timer{font-size:clamp(52px,15vw,82px);text-align:center;color:#a20f22;letter-spacing:3px}
+.recall-list{display:grid;gap:10px}
+.canvas-wrap{background:#fff;border:4px solid #68786b;border-radius:18px;padding:8px}
+canvas{width:100%;aspect-ratio:1/1;background:#fff;display:block;border-radius:12px;touch-action:none}
+.target-time{font-size:clamp(44px,13vw,72px);text-align:center;color:#a20f22;margin:8px}
+.hidden{display:none!important}
+.note{background:#fff6d9;border:3px solid #e3bd47;border-radius:16px;padding:12px;font-size:clamp(20px,5vw,27px);line-height:1.4}
+footer{text-align:center;font-size:18px;color:#48614d;margin-top:24px}
+@media(max-width:390px){
+  .app{padding:8px 8px 28px}.card{padding:13px}.brand{padding:8px}
+  .brand img{width:58px;height:58px}.memory-item{min-height:105px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="brand">
+    <img src="icon-192.png" alt="33 Works 商標">
+    <h1>高齡駕駛人<br>認知練習</h1>
+  </header>
+
+  <section id="home" class="screen">
+    <div class="card">
+      <h2>今天在哪裡練習？</h2>
+      <div class="location-grid">
+        <button class="big-btn location" data-location="家裡">家裡</button>
+        <button class="big-btn location" data-location="大潤發百貨">大潤發百貨</button>
+        <button class="big-btn location" data-location="監理站">監理站</button>
+      </div>
+    </div>
+    <div class="note">請先選擇地點，再開始完整練習。所有內容均可離線使用。</div>
+  </section>
+
+  <section id="orientation" class="screen hidden">
+    <div class="progress" id="progressText">基本認知 1 / 5</div>
+    <div class="card">
+      <h2 id="qTitle"></h2>
+      <div id="qBody"></div>
+      <div id="feedback" class="feedback"></div>
+      <div class="row">
+        <button id="checkBtn" class="big-btn secondary">看答案</button>
+        <button id="nextBtn" class="big-btn hidden">下一題</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="memoryIntro" class="screen hidden">
+    <div class="card">
+      <h2>第二關：短期記憶</h2>
+      <p>請仔細記住下面十樣東西。</p>
+      <div class="memory-grid" id="memoryGrid"></div>
+    </div>
+    <button id="memoryDone" class="big-btn">我看完了</button>
+  </section>
+
+  <section id="memoryWait" class="screen hidden">
+    <div class="card">
+      <h2>請休息兩分鐘</h2>
+      <p>剛才的物品已經收起來，請不要返回查看。</p>
+      <div id="timer" class="timer">02:00</div>
+    </div>
+    <div class="note">時間到後，會自動進入作答畫面。</div>
+  </section>
+
+  <section id="memoryRecall" class="screen hidden">
+    <div class="card">
+      <h2>請寫出記得的物品</h2>
+      <p class="small">每一格寫一樣，記得四樣以上就通過。</p>
+      <div id="recallInputs" class="recall-list"></div>
+      <div id="memoryFeedback" class="feedback"></div>
+      <button id="memoryCheck" class="big-btn secondary">看結果</button>
+    </div>
+  </section>
+
+  <section id="clockTest" class="screen hidden">
+    <div class="card">
+      <h2>第三關：畫時鐘</h2>
+      <p>請畫出下面指定的時間：</p>
+      <div id="targetTime" class="target-time"></div>
+      <div class="canvas-wrap"><canvas id="clockCanvas" width="800" height="800"></canvas></div>
+      <div class="row" style="margin-top:14px">
+        <button id="clearCanvas" class="big-btn light">清除重畫</button>
+        <button id="showClock" class="big-btn secondary">看參考答案</button>
+      </div>
+      <div id="clockAnswer" class="hidden" style="margin-top:14px">
+        <div class="canvas-wrap"><canvas id="answerCanvas" width="800" height="800"></canvas></div>
+        <p class="small">請自行比較數字位置、時針和分針方向。</p>
+      </div>
+      <button id="finishBtn" class="big-btn" style="margin-top:14px">完成這次練習</button>
+    </div>
+  </section>
+
+  <section id="done" class="screen hidden">
+    <div class="card">
+      <h2>練習完成</h2>
+      <p>今天已完成基本認知、短期記憶與畫時鐘練習。</p>
+      <button id="restart" class="big-btn">再練習一次</button>
+    </div>
+  </section>
+  <footer>33 Works｜長輩友善離線練習版</footer>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const screens = [...document.querySelectorAll('.screen')];
+const show = id => { screens.forEach(s=>s.classList.add('hidden')); $('#'+id).classList.remove('hidden'); scrollTo(0,0); };
+
+let selectedLocation = '';
+let qIndex = 0;
+let timerHandle = null;
+let targetHour = 0, targetMinute = 0;
+
+const zodiac = ['猴','雞','狗','豬','鼠','牛','虎','兔','龍','蛇','馬','羊'];
+function dateInfo(){
+  const d = new Date();
+  const roc = d.getFullYear()-1911;
+  const weekday = ['日','一','二','三','四','五','六'][d.getDay()];
+  let lunarMonth='', lunarDay='';
+  try{
+    const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{
+      month:'long',day:'numeric'
+    }).formatToParts(d);
+    const m = parts.find(p=>p.type==='month');
+    const day = parts.find(p=>p.type==='day');
+    lunarMonth = m ? m.value.replace('月','') : '';
+    lunarDay = day ? day.value : '';
+  }catch(e){}
+  return {year:d.getFullYear(),roc,zodiac:zodiac[d.getFullYear()%12],
+          month:d.getMonth()+1,day:d.getDate(),weekday,lunarMonth,lunarDay};
+}
+function norm(s){return String(s||'').trim().replace(/\s+/g,'').replace(/[臺台]/g,'台');}
+function anyMatch(values, answers){
+  const v = values.map(norm).filter(Boolean);
+  return v.some(x=>answers.map(norm).includes(x));
+}
+
+const questions = [
+  {
+    title:'問題一：請問今年是民國幾年，或今年出生的小孩屬什麼生肖',
+    render:()=>`<p class="small" style="color:#c11">請輸入您的答案（擇一填答即可）</p>
+      <div class="answer-row"><label>民國</label><input id="roc" inputmode="numeric" type="number"><span class="unit">年</span></div>
+      <div class="answer-row"><label>生肖</label><input id="zodiac" type="text"><span></span></div>
+      <div class="answer-row"><label>西元</label><input id="year" inputmode="numeric" type="number"><span class="unit">年</span></div>`,
+    answer:()=>{const d=dateInfo(); return `民國 ${d.roc} 年／生肖 ${d.zodiac}／西元 ${d.year} 年`;},
+    check:()=>{const d=dateInfo();return anyMatch([$('#roc').value],[d.roc])||anyMatch([$('#zodiac').value],[d.zodiac,`${d.zodiac}年`])||anyMatch([$('#year').value],[d.year]);}
+  },
+  {
+    title:'問題二：請問這個月是國曆或農曆幾月',
+    render:()=>`<p class="small" style="color:#c11">請輸入您的答案（擇一填答即可）</p>
+      <div class="answer-row"><label>國曆</label><input id="month" inputmode="numeric" type="number"><span class="unit">月</span></div>
+      <div class="answer-row"><label>農曆</label><input id="lmonth" type="text"><span class="unit">月</span></div>`,
+    answer:()=>{const d=dateInfo(); return `國曆 ${d.month} 月／農曆 ${d.lunarMonth || '請依手機日期確認'} 月`;},
+    check:()=>{const d=dateInfo();return anyMatch([$('#month').value],[d.month]) || (d.lunarMonth && anyMatch([$('#lmonth').value],[d.lunarMonth]));}
+  },
+  {
+    title:'問題三：請問今天是國曆或農曆幾號（日）',
+    render:()=>`<p class="small" style="color:#c11">請輸入您的答案（擇一填答即可）</p>
+      <div class="answer-row"><label>國曆</label><input id="day" inputmode="numeric" type="number"><span class="unit">號</span></div>
+      <div class="answer-row"><label>農曆</label><input id="lday" type="text"><span class="unit">日</span></div>`,
+    answer:()=>{const d=dateInfo(); return `國曆 ${d.day} 號／農曆 ${d.lunarDay || '請依手機日期確認'} 日`;},
+    check:()=>{const d=dateInfo();return anyMatch([$('#day').value],[d.day]) || (d.lunarDay && anyMatch([$('#lday').value],[d.lunarDay]));}
+  },
+  {
+    title:'問題四：請問今天是星期幾',
+    render:()=>`<div class="answer-row"><label>星期</label><input id="weekday" type="text"><span></span></div>`,
+    answer:()=>`星期${dateInfo().weekday}`,
+    check:()=>{const w=dateInfo().weekday; return anyMatch([$('#weekday').value],[w,`星期${w}`, w==='日'?'天':'']);}
+  },
+  {
+    title:'問題五：請問這裡是什麼地方',
+    render:()=>`<div class="answer-row"><label>答案</label><input id="place" type="text"><span></span></div>`,
+    answer:()=>selectedLocation,
+    check:()=>{
+      const aliases = selectedLocation==='家裡' ? ['家裡','家中','家','自己家']
+        : selectedLocation==='大潤發百貨' ? ['大潤發百貨','大潤發','百貨公司']
+        : ['監理站','監理所'];
+      return anyMatch([$('#place').value],aliases);
+    }
+  }
+];
+
+function renderQuestion(){
+  const q=questions[qIndex];
+  $('#progressText').textContent=`基本認知 ${qIndex+1} / ${questions.length}`;
+  $('#qTitle').textContent=q.title;
+  $('#qBody').innerHTML=q.render();
+  $('#feedback').className='feedback';
+  $('#feedback').textContent='';
+  $('#checkBtn').classList.remove('hidden');
+  $('#nextBtn').classList.add('hidden');
+  $('#nextBtn').textContent=qIndex===questions.length-1?'繼續第二關':'下一題';
+  show('orientation');
+}
+document.querySelectorAll('.location').forEach(b=>b.onclick=()=>{selectedLocation=b.dataset.location;qIndex=0;renderQuestion();});
+$('#checkBtn').onclick=()=>{
+  const q=questions[qIndex], ok=q.check();
+  const f=$('#feedback');
+  f.className='feedback show '+(ok?'ok':'no');
+  f.innerHTML=(ok?'答對了！<br>':'再看看答案：<br>')+q.answer();
+  $('#checkBtn').classList.add('hidden'); $('#nextBtn').classList.remove('hidden');
+};
+$('#nextBtn').onclick=()=>{
+  if(qIndex<questions.length-1){qIndex++;renderQuestion();}
+  else showMemory();
+};
+
+const memoryObjects = [["紅綠燈", "🚦"], ["禁止停車", "🚫"], ["機車", "🛵"], ["救護車", "🚑"], ["菜刀", "🔪"], ["碗", "🥣"], ["芭樂", "🍈"], ["蘋果", "🍎"], ["傘", "☂️"], ["筆", "🖊️"]];
+function showMemory(){
+  $('#memoryGrid').innerHTML=memoryObjects.map(([n,e])=>`<div class="memory-item"><div class="name">${n}</div><div class="emoji">${e}</div></div>`).join('');
+  show('memoryIntro');
+}
+$('#memoryDone').onclick=()=>{
+  show('memoryWait');
+  let remain=120;
+  const update=()=>{$('#timer').textContent=String(Math.floor(remain/60)).padStart(2,'0')+':'+String(remain%60).padStart(2,'0');};
+  update();
+  clearInterval(timerHandle);
+  timerHandle=setInterval(()=>{remain--;update();if(remain<=0){clearInterval(timerHandle);showRecall();}},1000);
+};
+function showRecall(){
+  $('#recallInputs').innerHTML=Array.from({length:10},(_,i)=>`<input type="text" class="recall" placeholder="第 ${i+1} 樣">`).join('');
+  $('#memoryFeedback').className='feedback';
+  show('memoryRecall');
+}
+function normalizeItem(s){
+  const x=norm(s);
+  const map={'紅綠燈':'紅綠燈','交通號誌':'紅綠燈','禁止停車':'禁止停車','禁停':'禁止停車',
+   '機車':'機車','摩托車':'機車','救護車':'救護車','救護':'救護車','菜刀':'菜刀','刀':'菜刀',
+   '碗':'碗','飯碗':'碗','芭樂':'芭樂','番石榴':'芭樂','蘋果':'蘋果','傘':'傘','雨傘':'傘',
+   '筆':'筆','原子筆':'筆','鉛筆':'筆'};
+  return map[x]||x;
+}
+$('#memoryCheck').onclick=()=>{
+  const entered=[...document.querySelectorAll('.recall')].map(x=>normalizeItem(x.value)).filter(Boolean);
+  const targets=memoryObjects.map(x=>x[0]);
+  const correct=[...new Set(entered.filter(x=>targets.includes(x)))];
+  const f=$('#memoryFeedback');
+  f.className='feedback show '+(correct.length>=4?'ok':'no');
+  f.innerHTML=`答對 ${correct.length} 樣：${correct.join('、')||'尚未答對'}<br>`+(correct.length>=4?'通過這次練習！':'需要四樣以上，再多練習幾次。');
+  $('#memoryCheck').textContent='繼續畫時鐘';
+  $('#memoryCheck').onclick=startClock;
+};
+
+function startClock(){
+  targetHour=Math.floor(Math.random()*12)+1;
+  targetMinute=[0,5,10,15,20,25,30,35,40,45,50,55][Math.floor(Math.random()*12)];
+  $('#targetTime').textContent=`${targetHour} 點 ${String(targetMinute).padStart(2,'0')} 分`;
+  $('#clockAnswer').classList.add('hidden');
+  clearDrawing();
+  drawClockFace($('#clockCanvas').getContext('2d'),false);
+  show('clockTest');
+}
+function drawClockFace(ctx,withHands){
+  const c=ctx.canvas,w=c.width,h=c.height, cx=w/2,cy=h/2,r=w*.43;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='#222';ctx.lineWidth=10;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 70px sans-serif';
+  for(let n=1;n<=12;n++){const a=n*Math.PI/6-Math.PI/2;ctx.fillText(n,cx+Math.cos(a)*r*.80,cy+Math.sin(a)*r*.80);}
+  if(withHands){
+    const minA=targetMinute*Math.PI/30-Math.PI/2;
+    const hourA=(targetHour%12+targetMinute/60)*Math.PI/6-Math.PI/2;
+    ctx.strokeStyle='#174f2d';ctx.lineCap='round';
+    ctx.lineWidth=18;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(hourA)*r*.48,cy+Math.sin(hourA)*r*.48);ctx.stroke();
+    ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(minA)*r*.70,cy+Math.sin(minA)*r*.70);ctx.stroke();
+    ctx.fillStyle='#174f2d';ctx.beginPath();ctx.arc(cx,cy,18,0,Math.PI*2);ctx.fill();
+  }
+}
+const canvas=$('#clockCanvas'),ctx=canvas.getContext('2d');
+let drawing=false,last=null;
+function point(ev){
+  const rect=canvas.getBoundingClientRect(), t=ev.touches?ev.touches[0]:ev;
+  return {x:(t.clientX-rect.left)*canvas.width/rect.width,y:(t.clientY-rect.top)*canvas.height/rect.height};
+}
+function down(ev){ev.preventDefault();drawing=true;last=point(ev);}
+function move(ev){if(!drawing)return;ev.preventDefault();const p=point(ev);ctx.strokeStyle='#c21b2e';ctx.lineWidth=14;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;}
+function up(){drawing=false;last=null;}
+canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);window.addEventListener('pointerup',up);
+function clearDrawing(){drawClockFace(ctx,false);}
+$('#clearCanvas').onclick=clearDrawing;
+$('#showClock').onclick=()=>{const a=$('#answerCanvas').getContext('2d');drawClockFace(a,true);$('#clockAnswer').classList.remove('hidden');};
+$('#finishBtn').onclick=()=>show('done');
+$('#restart').onclick=()=>show('home');
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js');
+</script>
+</body>
+</html>
