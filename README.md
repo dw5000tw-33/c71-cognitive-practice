@@ -1,6 +1,8 @@
-# 🧠 高齡認知練習 Android V1
+# 🧠 高齡駕駛換照認知練習 Android V1
 
-> 專為高齡者設計的離線認知練習 App，針對 **realme C71（Android）** 與大字體操作最佳化。
+> 專為高齡駕駛換照所需的認知功能檢測練習設計，可離線使用，並已將字體與操作介面優化，方便長輩練習。
+>
+> 測試環境：**realme C71（Android）**。其他符合系統需求的 Android 手機也可安裝使用。
 
 [![Android](https://img.shields.io/badge/Android-6.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/dw5000tw-33/c71-cognitive-practice/releases/latest)
 [![最新版本](https://img.shields.io/badge/最新版本-v1.0.0-2F80ED?style=for-the-badge)](https://github.com/dw5000tw-33/c71-cognitive-practice/releases/latest)
@@ -70,6 +72,6 @@
 ## 📌 版本資訊
 
 - 目前版本：`v1.0.0`
-- 主要測試裝置：realme C71
+- 測試環境：realme C71（Android）
 - 最低支援版本：Android 6.0 以上
 - 使用方式：直式、超大字體、大按鈕、完全離線
