@@ -1,0 +1,28 @@
+{
+  "id": "./",
+  "name": "高齡駕駛人認知練習",
+  "short_name": "高齡認知練習",
+  "description": "高齡駕駛人認知功能練習工具，支援加入主畫面與離線使用。",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fff7",
+  "theme_color": "#78b88a",
+  "icons": [
+    {
+      "src": "./app/src/main/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./app/src/main/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
